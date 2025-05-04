@@ -1,6 +1,6 @@
 import { db } from '../db';
 // import { businesses, userInteractions, users } from '../db/schema';
-import { eq, and, or, desc, sql, gt } from 'drizzle-orm';
+import { eq, or, desc, sql } from 'drizzle-orm';
 import { users } from '../db/schema/users';
 import { businesses } from '../db/schema/businesses';
 
@@ -35,7 +35,7 @@ export async function recommendServices(params: RecommendationParams) {
 		.where(serviceType ? eq(businesses.type, serviceType) : undefined)
 		.orderBy(
 			// Prioritize premium businesses
-			businesses.isPremium ? desc(businesses.isPremium) : undefined,
+			desc(businesses.isPremium),
 			// Then by distance
 			sql`distance`,
 		)
@@ -43,13 +43,14 @@ export async function recommendServices(params: RecommendationParams) {
 
 	// Filter by user preferences if available
 	if (userPreferences.serviceTypes?.length) {
-		query = query.where(
+		// Apply preferences filter ONLY if no specific serviceType was requested
+		if (!serviceType) {
 			or(
 				...userPreferences.serviceTypes.map((t) =>
 					eq(businesses.type, t),
 				),
-			),
-		);
+			);
+		}
 	}
 
 	const results = await query;
