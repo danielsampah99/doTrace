@@ -11,11 +11,23 @@ import { businessSubscriptions } from './schema/business-subsriptions';
 import { businessesRelations } from './schema/business-relations';
 import { usersRelations } from './schema/user-relations';
 
-
-config({ path: '.env'})
+config({ path: '.env' });
 
 const sql = neon(envVars.DATABASE_URL);
 
-export const db = drizzle({ client: sql, casing: 'snake_case', logger: true, schema: { businesses, users, userInteractions, usersRelations, geofences, businessesRelations, businessSubscriptions } });
+export const db = drizzle({
+	client: sql,
+	casing: 'snake_case',
+	logger: true,
+	schema: {
+		businesses,
+		users,
+		userInteractions,
+		usersRelations,
+		geofences,
+		businessesRelations,
+		businessSubscriptions,
+	},
+});
 
-export type Database = typeof db
+export type Database = typeof db;

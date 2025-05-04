@@ -36,30 +36,28 @@
 // 	],
 // );
 
-import { pgTable, serial, varchar, timestamp, boolean, jsonb } from 'drizzle-orm/pg-core';
+import {
+	pgTable,
+	serial,
+	varchar,
+	timestamp,
+	boolean,
+	jsonb,
+} from 'drizzle-orm/pg-core';
 // import { relations } from 'drizzle-orm';
 
 // Users table
 export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  phoneNumber: varchar('phone_number', { length: 20 }).notNull().unique(),
-  preferences: jsonb('preferences').$type<{
-    serviceTypes?: string[];
-    dietaryRestrictions?: string[];
-    preferredBanks?: string[];
-  }>(),
-  locationTracking: boolean('location_tracking').default(true),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+	id: serial('id').primaryKey(),
+	phoneNumber: varchar('phone_number', { length: 20 }).notNull().unique(),
+	preferences: jsonb('preferences').$type<{
+		serviceTypes?: string[];
+		dietaryRestrictions?: string[];
+		preferredBanks?: string[];
+	}>(),
+	locationTracking: boolean('location_tracking').default(true),
+	createdAt: timestamp('created_at').defaultNow(),
+	updatedAt: timestamp('updated_at').defaultNow(),
 });
-
-
-
-
-
-
-
-
-
 
 // Relations

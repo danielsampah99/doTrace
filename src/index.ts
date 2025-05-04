@@ -8,18 +8,20 @@ import { businessRouter } from './routes/business';
 import { geofenceRouter } from './routes/geofence';
 import { recommendationRouter } from './routes/recommendation';
 
-const app = new Elysia({ prefix: "/api/v1"})
+const app = new Elysia({ prefix: '/api/v1' })
 	.use(swagger())
 	.use(cors())
 	.use(twilioRouter)
-  .use(businessRouter)
-  .use(userRouter)
-  .use(geofenceRouter)
-  .use(recommendationRouter)
+	.use(businessRouter)
+	.use(userRouter)
+	.use(geofenceRouter)
+	.use(recommendationRouter)
 	.get('/', () => 'Welcome to the doTrace API')
 	.get('/health', () => ({ status: 'OK' }))
-	.listen(envVars.PORT, (server) => console.log(
-		`Server is running at ${server.hostname}:${server.port} with url "${server.url}"`
-		));
+	.listen(envVars.PORT, (server) =>
+		console.log(
+			`Server is running at ${server.hostname}:${server.port} with url "${server.url}"`,
+		),
+	);
 
-export type App = typeof app
+export type App = typeof app;
