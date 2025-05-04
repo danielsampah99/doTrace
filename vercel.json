@@ -1,5 +1,5 @@
 {
 	"version": 2,
-	"builds": [{ "src": "server.js", "use": "bun", "config": { "runtime": "node14" } }],
-	"routes": [{ "src": "/(.*)", "dest": "server.js" }]
+	"builds": [{ "src": "index.js", "use": "bun", "config": { "runtime": "node14" } }],
+	"routes": [{ "src": "/(.*)", "dest": "index.js" }]
 }
