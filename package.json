@@ -3,13 +3,33 @@
   "version": "1.0.50",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push:pg --config drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config drizzle.config.ts",
+    "format": "biome format ./src",
+    "format:fix": "biome format --write ./src",
+    "lint": "biome lint ./src",
+    "lint:fix": "biome lint --write ./src",
+    "fix": "biome check --write ./src"
   },
   "dependencies": {
-    "elysia": "latest"
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/swagger": "^1.2.2",
+    "@googlemaps/google-maps-services-js": "^3.4.1",
+    "@neondatabase/serverless": "^1.0.0",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.43.1",
+    "drizzle-typebox": "^0.3.2",
+    "elysia": "latest",
+    "twilio": "^5.5.2"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@biomejs/biome": "1.9.4",
+    "bun-types": "latest",
+    "drizzle-kit": "^0.31.1",
+    "tsx": "^4.19.3"
   },
   "module": "src/index.js"
 }
