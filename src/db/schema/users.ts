@@ -4,7 +4,7 @@ import {
 	timestamp,
 	boolean,
 	jsonb,
-    integer,
+	integer,
 } from 'drizzle-orm/pg-core';
 
 // Users table

@@ -1,62 +1,95 @@
-import { db } from '../db';
-// import { businesses, userInteractions, users } from '../db/schema';
-import { eq, or, desc, sql } from 'drizzle-orm';
-import { users } from '../db/schema/users';
-import { businesses } from '../db/schema/businesses';
 
-interface RecommendationParams {
-	userId: number;
-	serviceType?: string;
-	latitude: number;
-	longitude: number;
-	limit?: number;
-}
+import axios, { AxiosError } from 'axios'
+// import { PlacesClient } from '@googlemaps/places';
+// const {PlacesClient} = require('@googlemaps/places').v1;
 
-export async function recommendServices(params: RecommendationParams) {
-	const { userId, serviceType, latitude, longitude, limit = 5 } = params;
+export const recommendBusinesses = async (params: { radius: number, longitude: number, latitude: number}) => {
+	const {radius, longitude, latitude } = params
 
-	// Get user preferences
-	const user = await db.query.users.findFirst({
-		where: eq(users.id, userId),
-	});
 
-	const userPreferences = user?.preferences || {};
 
-	// Base query
-	let query = db
-		.select({
-			business: businesses,
-			distance:
-				sql<number>`|/((${businesses.latitude} - ${latitude})^2 + (${businesses.longitude} - ${longitude})^2)`.as(
-					'distance',
-				),
-		})
-		.from(businesses)
-		.where(serviceType ? eq(businesses.type, serviceType) : undefined)
-		.orderBy(
-			// Prioritize premium businesses
-			desc(businesses.isPremium),
-			// Then by distance
-			sql`distance`,
-		)
-		.limit(limit);
+ 	const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
-	// Filter by user preferences if available
-	if (userPreferences.serviceTypes?.length) {
-		// Apply preferences filter ONLY if no specific serviceType was requested
-		if (!serviceType) {
-			or(
-				...userPreferences.serviceTypes.map((t) =>
-					eq(businesses.type, t),
-				),
-			);
-		}
-	}
+    console.info("--- recommendBusinesses (using Axios) ---");
+    console.info("Params:", params);
 
-	const results = await query;
+    if (!apiKey) {
+        console.error("FATAL: GOOGLE_PLACES_API_KEY environment variable is not set.");
+        return []; // Return empty array if API key is missing
+    }
+    console.info("API key found.");
 
-	return results.map((r) => ({
-		...r.business,
-		distance: r.distance,
-	}));
+    // API Endpoint
+    const endpoint = 'https://places.googleapis.com/v1/places:searchNearby';
+
+    // Request Body Payload
+    const requestBody = {
+        // Corrected typo from original code
+        includedTypes: ['restaurant'],
+        maxResultCount: 15, // Match original logic, adjust if needed (max 20 for nearbySearch)
+        locationRestriction: {
+            circle: {
+                center: {
+                    latitude: latitude,
+                    longitude: longitude
+                },
+                radius: radius // The radius in meters.
+            }
+        },
+        // Optional parameters (match original logic or adjust)
+        languageCode: 'en-GB',
+        regionCode: 'GB', // Use a CLDR region code like 'GB', 'US', etc.
+        rankPreference: 'POPULARITY' // Use POPULARITY or DISTANCE
+    };
+
+    // Request Headers
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.googleMapsLinks,places.googleMapsUri,places.types,places.location,places.websiteUri,places.addressDescriptor'
+    };
+
+    console.log("Attempting Axios POST to:", endpoint);
+    // console.log("Request Body:", JSON.stringify(requestBody, null, 2)); // Uncomment for debugging
+    // console.log("Headers:", headers); // Uncomment for debugging
+
+    try {
+        console.log("Sending request via Axios...");
+        console.time("axiosApiCallDuration"); // Start timer
+
+        // Make the POST request using axios
+        const response = await axios.post(endpoint, requestBody, { headers });
+
+        console.timeEnd("axiosApiCallDuration"); // End timer
+        console.log("Axios request successful. Status:", response.status);
+
+        // Extract the array of places from the response data
+        // Use optional chaining (?.) and nullish coalescing (??) for safety
+        const places = response.data?.places ?? [];
+        console.log(`Found ${places.length} places.`);
+
+        return places; // Return the array of places
+
+    } catch (error: any) { // Catch block
+        console.timeEnd("axiosApiCallDuration"); // Ensure timer ends on error too
+        console.error("--- Places API Request Error (Axios) ---");
+
+        // Check if it's an Axios error for more details
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError<any>; // Type assertion for better access
+            console.error("Status Code:", axiosError.response?.status);
+            // Log the error response data from Google, if available
+            console.error("Error Response Data:", JSON.stringify(axiosError.response?.data, null, 2));
+            // console.error("Response Headers:", axiosError.response?.headers); // Uncomment if needed
+        } else {
+            // Log generic errors
+            console.error("Non-Axios error occurred:", error.message || error);
+        }
+
+        return []; // Return empty array on any error
+    } finally {
+        console.log("--- Exiting recommendBusinesses function ---");
+    }
+
+
 }
