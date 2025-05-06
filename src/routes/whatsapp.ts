@@ -55,7 +55,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			return ''
 		}
 
-		if (messageText.includes('near me')) {
+		if (body.Body.toLowerCase().includes('near me')) {
 			if (user) {
 				// extract and store search term in the db
 				const searchType = messageText.toLowerCase().split('near me')[0].trim().replaceAll(' ', '_')
