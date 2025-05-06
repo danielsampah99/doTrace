@@ -7,6 +7,7 @@ import { users } from '../db/schema/users';
 import twilio from 'twilio';
 import type { TwilioWhatsAppWebhook } from '../types';
 import { recommendBusinesses } from './recommendations-engine';
+import { getCategories } from '../utils';
 
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;

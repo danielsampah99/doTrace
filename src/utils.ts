@@ -1,4 +1,4 @@
-const getCategories = (): string => {
+export const getCategories = (): string => {
 	return `Okay, here is the full list of searchable place types.
 		Just type one of the search terms below to find places near you:
 
