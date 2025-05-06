@@ -43,12 +43,12 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			console.info('starting search')
 
 			// recommend businesses
-			const recommendations = await recommendBusinesses({ radius: 3000, longitude: Number.parseFloat(body.Longitude), latitude: Number.parseFloat(body.Latitude)})
+			const recommendations = await recommendBusinesses({ includedTypes: [user?.searchType ?? ''], radius: 3000, longitude: Number.parseFloat(body.Longitude), latitude: Number.parseFloat(body.Latitude)})
 
 			console.dir(recommendations)
 
 			const messageBody = Array.isArray(recommendations) && recommendations?.length! > 0
-				? `Based on your location, here are ${recommendations.length} recommendations within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1.} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
+				? `Based on your location, here are ${recommendations.length} ${user?.searchType} within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1.} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
 				: `Thanks for sharing your location! We couldn't find specific recommendations nearby right now, but we'll keep you updated.`
 
 			console.info("message body: ", messageBody)
@@ -129,12 +129,14 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 
 		// Handle service requests
 		if (messageText.includes('near me')) {
-			if (!user) {
+			if (user) {
 				// extract and store search term in the db
+				const searchType = messageText.split('near me')[0].trim()
 
+				await db.update(users).set({ searchType }).where(eq(users.id, user.id))
 
 				await client.messages.create({
-					body: `Hello, ${body.ProfileName}, Please send your location`,
+					body: `Hello, ${body.ProfileName}, Please send your location, for ${searchType} near you`,
 					from: recipient,
 					to: userPhone,
 				});

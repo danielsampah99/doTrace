@@ -3,8 +3,8 @@ import axios, { AxiosError } from 'axios'
 // import { PlacesClient } from '@googlemaps/places';
 // const {PlacesClient} = require('@googlemaps/places').v1;
 
-export const recommendBusinesses = async (params: { radius: number, longitude: number, latitude: number}) => {
-	const {radius, longitude, latitude } = params
+export const recommendBusinesses = async (params: { includedTypes: string[], radius: number, longitude: number, latitude: number}) => {
+	const {radius, longitude, latitude, includedTypes } = params
 
 
 
@@ -25,7 +25,7 @@ export const recommendBusinesses = async (params: { radius: number, longitude: n
     // Request Body Payload
     const requestBody = {
         // Corrected typo from original code
-        includedTypes: ['restaurant'],
+        includedTypes,
         maxResultCount: 10, // Match original logic, adjust if needed (max 20 for nearbySearch)
         locationRestriction: {
             circle: {
@@ -39,7 +39,7 @@ export const recommendBusinesses = async (params: { radius: number, longitude: n
         // Optional parameters (match original logic or adjust)
         languageCode: 'en-GB',
         regionCode: 'GB', // Use a CLDR region code like 'GB', 'US', etc.
-        rankPreference: 'POPULARITY' // Use POPULARITY or DISTANCE
+        rankPreference: 'POPULARITY' // POPULARITY or DISTANCE
     };
 
     // Request Headers
@@ -50,8 +50,8 @@ export const recommendBusinesses = async (params: { radius: number, longitude: n
     };
 
     console.log("Attempting Axios POST to:", endpoint);
-    // console.log("Request Body:", JSON.stringify(requestBody, null, 2)); // Uncomment for debugging
-    // console.log("Headers:", headers); // Uncomment for debugging
+    // console.log("Request Body:", JSON.stringify(requestBody, null, 2)); // debugging
+    // console.log("Headers:", headers); // debugging
 
     try {
         console.log("Sending request via Axios...");
@@ -63,16 +63,13 @@ export const recommendBusinesses = async (params: { radius: number, longitude: n
         console.timeEnd("axiosApiCallDuration"); // End timer
         console.log("Axios request successful. Status:", response.status);
 
-        // Extract the array of places from the response data
-        // Use optional chaining (?.) and nullish coalescing (??) for safety
+
         const places = response.data?.places ?? [];
         console.log(`Found ${places.length} places.`);
 
         return places; // Return the array of places
 
     } catch (error: any) { // Catch block
-        console.timeEnd("axiosApiCallDuration"); // Ensure timer ends on error too
-        console.error("--- Places API Request Error (Axios) ---");
 
         // Check if it's an Axios error for more details
         if (axios.isAxiosError(error)) {
