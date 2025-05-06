@@ -34,7 +34,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			where: eq(users.phoneNumber, normalizedPhone),
 		});
 
-		const messageText = body.Body?.trim().toUpperCase() ?? ''
+		const messageText = body.Body.trim().toUpperCase() ?? ''
 
 		if (body.Longitude && body.Latitude && body.MessageType === 'location') {
 			console.log(`Received location: Lat ${body.Latitude}, Lon ${body.Longitude}`);
@@ -133,7 +133,23 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			// return ''
 		}
 
+		if (messageText === 'PREFERENCES') {
+			if (!user) {
+				await client.messages.create({
+					body: 'Please register first by sending HELP to this number.',
+					from: `whatsapp:${twilioPhoneNumber}`,
+					to: userPhone,
+				});
+				return '';
+			}
 
+			await client.messages.create({
+				body: `Current preferences:\n\n1. Bank: ${user.preferences?.preferredBanks || 'Not set'}\n2. Cuisine: ${user.preferences?.dietaryRestrictions?.join(', ') || 'Any'}\n\nReply with:\n- "SET BANK [name]"\n- "SET DIET [vegetarian/vegan/etc]"`,
+				from: `whatsapp:${twilioPhoneNumber}`,
+				to: userPhone,
+			});
+			return '';
+		}
 
 		if (!user) {
 			await client.messages.create({
@@ -142,6 +158,9 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 								to: userPhone,
 			})
 		}
+
+		// // Handle preferences
+
 
 		// if (body.Longitude && body.Latitude && body.MessageType === 'location') {
 		// 	console.log(`Received location: Lat ${body.Latitude}, Lon ${body.Longitude}`);
@@ -200,24 +219,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 		// 	return '';
 		// }
 
-		// // Handle preferences
-		// if (message.trim().toUpperCase() === 'PREFERENCES') {
-		// 	if (!user) {
-		// 		await client.messages.create({
-		// 			body: 'Please register first by sending HELP to this number.',
-		// 			from: `whatsapp:${twilioPhoneNumber}`,
-		// 			to: userPhone,
-		// 		});
-		// 		return '';
-		// 	}
 
-		// 	await client.messages.create({
-		// 		body: `Current preferences:\n\n1. Bank: ${user.preferences?.preferredBanks || 'Not set'}\n2. Cuisine: ${user.preferences?.dietaryRestrictions?.join(', ') || 'Any'}\n\nReply with:\n- "SET BANK [name]"\n- "SET DIET [vegetarian/vegan/etc]"`,
-		// 		from: `whatsapp:${twilioPhoneNumber}`,
-		// 		to: userPhone,
-		// 	});
-		// 	return '';
-		// }
 
 		// // Handle preference updates
 		// if (message.toUpperCase().startsWith('SET BANK')) {
