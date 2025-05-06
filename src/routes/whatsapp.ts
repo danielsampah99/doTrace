@@ -105,11 +105,31 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 		} else {
 			// what can doTrace do? TODO: save last location of the user
 			await client.messages.create({
-				body: `Hi ${body.ProfileName!}! Here's how you can use doTrace:\n\n1. Send your *location* 📍 to get nearby recommendations.\n2. Search directly (e.g., "Gas stations near me").\n3. Reply with *PREFERENCES* to view/update yours.\n4. Reply with *HELP* to see this message again.`,
+				body: `Hi ${body.ProfileName!}! Here's how you can use doTrace:\n\n1. Send your *location* 📍 to get nearby recommendations.\n2. Search directly (e.g., "Gas stations near me").\n3. Reply with *PREFERENCES* to view/update yours.\n4. Reply with *Categories* for full list of search categories we support.\n5. Reply with *HELP* to see this message again.`,
 				from: recipient,
 				to: userPhone,
 			});
 			// return ''
+		}
+
+		if (messageText === 'CATEGORIES') {
+			if (!user) {
+				await client.messages.create({
+					body: `Hello ${body.ProfileName || 'there'}! Please register first by sending HELP to this number, then you can ask for categories.`,
+					from: recipient,
+					to: userPhone,
+				});
+				return '';
+			}
+
+			const categoriesList = getCategories()
+
+			await client.messages.create({
+				body: categoriesList,
+				from: recipient,
+				to: userPhone
+			})
+			return ''
 		}
 
 		if (!user) {
