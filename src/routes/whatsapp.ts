@@ -71,6 +71,26 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			}
 		}
 
+		if (messageText === 'CATEGORIES') {
+			if (!user) {
+				await client.messages.create({
+					body: `Hello ${body.ProfileName || 'there'}! Please register first by sending HELP to this number, then you can ask for categories.`,
+					from: recipient,
+					to: userPhone,
+				});
+				return '';
+			}
+
+			const categoriesList = getCategories()
+
+			await client.messages.create({
+				body: categoriesList,
+				from: recipient,
+				to: userPhone
+			})
+			return ''
+		}
+
 		// 1. HELP / REGISTRATION
 		if (body.Body.trim().toUpperCase() === 'HELP') {
 
@@ -112,25 +132,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			// return ''
 		}
 
-		if (messageText === 'CATEGORIES') {
-			if (!user) {
-				await client.messages.create({
-					body: `Hello ${body.ProfileName || 'there'}! Please register first by sending HELP to this number, then you can ask for categories.`,
-					from: recipient,
-					to: userPhone,
-				});
-				return '';
-			}
 
-			const categoriesList = getCategories()
-
-			await client.messages.create({
-				body: categoriesList,
-				from: recipient,
-				to: userPhone
-			})
-			return ''
-		}
 
 		if (!user) {
 			await client.messages.create({
