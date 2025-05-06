@@ -130,6 +130,9 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 		// Handle service requests
 		if (messageText.includes('near me')) {
 			if (!user) {
+				// extract and store search term in the db
+
+
 				await client.messages.create({
 					body: `Hello, ${body.ProfileName}, Please send your location`,
 					from: recipient,

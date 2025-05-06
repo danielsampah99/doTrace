@@ -17,6 +17,7 @@ export const users = pgTable('users', {
 		preferredBanks?: string[];
 	}>(),
 	locationTracking: boolean('location_tracking').default(true),
+	searchType: varchar('search_type', { length: 50}),
 	createdAt: timestamp('created_at').defaultNow(),
 	updatedAt: timestamp('updated_at').defaultNow(),
 });

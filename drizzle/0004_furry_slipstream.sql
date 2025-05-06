@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "search_type" varchar(50);
