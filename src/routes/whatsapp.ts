@@ -48,7 +48,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			console.dir(recommendations)
 
 			const messageBody = Array.isArray(recommendations) && recommendations?.length! > 0
-				? `Based on your location, here are ${recommendations.length} recommendations within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1.} ${service?.displayName?.text} - ${service?.formattedAddress}`).join('\n\n')}`
+				? `Based on your location, here are ${recommendations.length} recommendations within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1.} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
 				: `Thanks for sharing your location! We couldn't find specific recommendations nearby right now, but we'll keep you updated.`
 
 			console.info("message body: ", messageBody)

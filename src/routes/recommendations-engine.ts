@@ -26,7 +26,7 @@ export const recommendBusinesses = async (params: { radius: number, longitude: n
     const requestBody = {
         // Corrected typo from original code
         includedTypes: ['restaurant'],
-        maxResultCount: 15, // Match original logic, adjust if needed (max 20 for nearbySearch)
+        maxResultCount: 10, // Match original logic, adjust if needed (max 20 for nearbySearch)
         locationRestriction: {
             circle: {
                 center: {
