@@ -84,6 +84,15 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 
 			const categoriesList = getCategories()
 
+			if (categoriesList.length > 1600) {
+				await client.messages.create({
+					body: `Message limit hit, refere to website for full list of search categories`,
+					from: recipient,
+					to: userPhone
+				})
+				return ''
+			}
+
 			await client.messages.create({
 				body: categoriesList,
 				from: recipient,
