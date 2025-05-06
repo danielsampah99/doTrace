@@ -33,8 +33,6 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			where: eq(users.phoneNumber, normalizedPhone),
 		});
 
-		console.dir(user)
-
 		const messageText = body.Body?.trim().toUpperCase() ?? ''
 
 		if (body.Longitude && body.Latitude && body.MessageType === 'location') {
@@ -48,14 +46,29 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			console.dir(recommendations)
 
 			const messageBody = Array.isArray(recommendations) && recommendations?.length! > 0
-				? `Based on your location, here are ${recommendations.length} ${user?.searchType} within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1.} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
+				? `Based on your location, here are ${recommendations.length} ${user?.searchType?.replaceAll('_', ' ')} within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1.} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
 				: `Thanks for sharing your location! We couldn't find specific recommendations nearby right now, but we'll keep you updated.`
 
-			console.info("message body: ", messageBody)
 			await client.messages.create({
 				body: messageBody, from: recipient, to: userPhone
 			})
 			return ''
+		}
+
+		if (messageText.includes('near me')) {
+			if (user) {
+				// extract and store search term in the db
+				const searchType = messageText.toLowerCase().split('near me')[0].trim().replaceAll(' ', '_')
+
+				await db.update(users).set({ searchType }).where(eq(users.id, user.id))
+
+				await client.messages.create({
+					body: `Hello, ${body.ProfileName}, Please send your location, for ${searchType} near you`,
+					from: recipient,
+					to: userPhone,
+				});
+				return '';
+			}
 		}
 
 		// 1. HELP / REGISTRATION
@@ -128,21 +141,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 		// }
 
 		// Handle service requests
-		if (messageText.includes('near me')) {
-			if (user) {
-				// extract and store search term in the db
-				const searchType = messageText.split('near me')[0].trim()
 
-				await db.update(users).set({ searchType }).where(eq(users.id, user.id))
-
-				await client.messages.create({
-					body: `Hello, ${body.ProfileName}, Please send your location, for ${searchType} near you`,
-					from: recipient,
-					to: userPhone,
-				});
-				return '';
-			}
-		}
 
 		// 	await client.messages.create({
 		// 		body: "Kindly share your location with me",
