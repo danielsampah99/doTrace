@@ -63,7 +63,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 				await db.update(users).set({ searchType }).where(eq(users.id, user.id))
 
 				await client.messages.create({
-					body: `Hello, ${body.ProfileName}, Please send your location, for ${searchType} near you`,
+					body: `Hello, ${body.ProfileName}, Please send your location, for ${searchType.replaceAll('_', ' ')} near you`,
 					from: recipient,
 					to: userPhone,
 				});
