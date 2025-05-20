@@ -8,7 +8,7 @@ import twilio from 'twilio';
 import type { TwilioWhatsAppWebhook } from '../types';
 import { recommendBusinesses } from './recommendations-engine';
 import { getCategories } from '../utils';
-import { getLocationUpdateResponse } from '../intents';
+import { getHelpResponse, getLocationUpdateResponse, isHelpRequest } from '../intents';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -76,6 +76,43 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 				to: userPhone,
 			})
 			return '';
+		}
+
+		// check for help requests
+		if (isHelpRequest(body.Body.toLowerCase())) {
+
+			console.info('this is a help request')
+
+			// add the user if their account is non existent
+			if (!user) {
+
+				console.info('new user...')
+				try {
+				await db.insert(usersTable).values({
+					phoneNumber: userPhone,
+				}).returning()
+
+				} catch (e) {
+					console.error("new user error: ", e)
+				}
+
+				// send the response to the user
+				await client.messages.create({
+					body: `Hello, ${userName}, welcome to 10nearby. reply with **/help** whenever you feel lost on how to use me.`,
+					from: recipient,
+					to: userPhone
+				})
+				return ''
+			}
+
+			// send help message to client or user
+			await client.messages.create({
+				body: getHelpResponse(userName),
+				from: recipient,
+				to: userPhone
+			})
+
+			return ''
 		}
 
 		if (body.Body.toLowerCase().includes('near me')) {
