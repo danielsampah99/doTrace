@@ -6,9 +6,8 @@ import { eq } from 'drizzle-orm';
 import { users as usersTable } from '../db/schema/users';
 import twilio from 'twilio';
 import type { TwilioWhatsAppWebhook } from '../types';
-import { recommendBusinesses } from './recommendations-engine';
 import { getCategories } from '../utils';
-import { getHelpResponse, getLocationUpdateResponse, isHelpRequest } from '../intents';
+import { getHelpResponse, getLocationUpdateResponse, isCategoryRequest, isHelpRequest } from '../intents';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -138,7 +137,8 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			}
 		}
 
-		if (messageText === 'CATEGORIES') {
+		// ----- check for category requests -----
+		if (isCategoryRequest(body.Body.toLowerCase().trim())) {
 			if (!user) {
 				await client.messages.create({
 					body: `Hello ${body.ProfileName || 'there'}! Please register first by sending HELP to this number, then you can ask for categories.`,
@@ -348,5 +348,14 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 
 			// Default response
 		}
+
+		// --- default no response ---
+		await client.messages.create({
+			body: `Sorry ${!!Math.floor(Math.random()) ? userName : ''}, I did not catch that. Could you try again or modify your request?`,
+			from: recipient,
+			to: userPhone
+		})
+
+		return ''
 	},
 );

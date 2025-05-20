@@ -230,6 +230,43 @@ export const isHelpRequest = (userInput: string): boolean => {
 	return false
 }
 
+export const isCategoryRequest = (userInput: string): boolean => {
+	if (!userInput || typeof userInput !== 'string') {
+		return false
+	}
+
+	// convert input to lowercase for normalization
+	const normalizedInput = userInput.toLowerCase().trim()
+
+	// direct keyword match
+	if (PRIMARY_CATEGORY_TERMS.some((word) =>
+		normalizedInput === word || normalizedInput.includes(` ${word} `) || normalizedInput.startsWith(`${word} `) || normalizedInput.endsWith(` ${word}`) || normalizedInput.includes(`${word}?`)
+	)) {
+			return true
+		}
+
+	// detect questions
+	for (const question of questionStarters) {
+		if (normalizedInput.startsWith(userInput)) {
+			const remaining = normalizedInput.substring(question.length).trim()
+
+			if (PRIMARY_CATEGORY_TERMS.some(word => remaining.includes(word) || remaining.startsWith(word) || remaining.endsWith(word))) {
+				return true
+			}
+		}
+	}
+
+	// check for keyword typos
+	for (const help of PRIMARY_CATEGORY_TERMS) {
+
+		if (isCloseMatch(normalizedInput, help)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 export function detectIntent(message: string): keyof typeof intentMap {
 	const text = message.toLowerCase();
 
