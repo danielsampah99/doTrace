@@ -1,6 +1,5 @@
 import { Elysia } from 'elysia';
 
-
 export const recommendationRouter = new Elysia({
 	prefix: '/recommendations',
 }).get('/', async ({ query }) => {
