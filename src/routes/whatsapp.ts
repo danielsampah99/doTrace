@@ -6,8 +6,15 @@ import { eq } from 'drizzle-orm';
 import { users as usersTable } from '../db/schema/users';
 import twilio from 'twilio';
 import type { TwilioWhatsAppWebhook } from '../types';
-import { getCategories } from '../utils';
-import { getHelpResponse, getLocationUpdateResponse, isCategoryRequest, isHelpRequest } from '../intents';
+import { findCategoryInRequest, getCategories } from '../utils';
+import {
+	getHelpResponse,
+	getLocationUpdateResponse,
+	isCategoryRequest,
+	isHelpRequest,
+	isNonPaidRequest,
+} from '../intents';
+import { recommendBusinesses } from './recommendations-engine';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -43,7 +50,6 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			body.Latitude &&
 			body.MessageType === 'location'
 		) {
-
 			await db
 				.update(usersTable)
 				.set({
@@ -73,63 +79,95 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 				body: messageBody,
 				from: recipient,
 				to: userPhone,
-			})
+			});
 			return '';
 		}
 
 		// check for help requests
 		if (isHelpRequest(body.Body.toLowerCase())) {
-
-			console.info('this is a help request')
+			console.info('this is a help request');
 
 			// add the user if their account is non existent
 			if (!user) {
-
-				console.info('new user...')
+				console.info('new user...');
 				try {
-				await db.insert(usersTable).values({
-					phoneNumber: userPhone,
-				}).returning()
-
+					await db
+						.insert(usersTable)
+						.values({
+							phoneNumber: userPhone,
+						})
+						.returning();
 				} catch (e) {
-					console.error("new user error: ", e)
+					console.error('new user error: ', e);
 				}
 
 				// send the response to the user
 				await client.messages.create({
 					body: `Hello, ${userName}, welcome to 10nearby. reply with **/help** whenever you feel lost on how to use me.`,
 					from: recipient,
-					to: userPhone
-				})
-				return ''
+					to: userPhone,
+				});
+				return '';
 			}
 
 			// send help message to client or user
 			await client.messages.create({
 				body: getHelpResponse(userName),
 				from: recipient,
-				to: userPhone
-			})
+				to: userPhone,
+			});
 
-			return ''
+			return '';
 		}
 
-		if (body.Body.toLowerCase().includes('near me')) {
+		if (isNonPaidRequest(body.Body.toLowerCase().trim())) {
+			console.info('This is a paid request');
+
 			if (user) {
 				// extract and store search term in the db
-				const searchType = messageText
-					.toLowerCase()
-					.split('near me')[0]
-					.trim()
-					.replaceAll(' ', '_');
+				//
+				console.info(
+					`I'm about to do find and extract the category: ${body.Body.toLowerCase().trim()} in the request`,
+				);
+				const searchType = findCategoryInRequest(
+					body.Body.toLowerCase().trim(),
+				);
 
-				await db
-					.update(usersTable)
-					.set({ searchType })
-					.where(eq(usersTable.id, user.id));
+				if (searchType) {
+					await db
+						.update(usersTable)
+						.set({ searchType })
+						.where(eq(usersTable.id, user.id));
+
+					// make search with keyword
+					const recommendations = await recommendBusinesses({
+						includedTypes: [searchType ?? ''],
+						radius: 3000,
+						longitude: user?.longitude
+							? Number.parseFloat(user.longitude)
+							: 0,
+						latitude: user?.latitude
+							? Number.parseFloat(user?.latitude)
+							: 0,
+					});
+
+					const messageBody =
+						Array.isArray(recommendations) &&
+						recommendations?.length! > 0
+							? `Okay, here are ${recommendations.length} ${user?.searchType?.replaceAll('_', ' ')} within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
+							: `Thanks for your input! I can't process your request at the moment. Kindly try again soon`;
+
+					await client.messages.create({
+						body: messageBody, // send results
+						from: recipient,
+						to: userPhone,
+					});
+					return '';
+				}
 
 				await client.messages.create({
-					body: `Hello, ${body.ProfileName}, Please send your location, for ${searchType.replaceAll('_', ' ')} near you`,
+					body: `Sorry i did not catch your request.
+						Perhaps you'd want to send categories to see the full list of potential searches for a free account`,
 					from: recipient,
 					to: userPhone,
 				});
@@ -353,9 +391,15 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 		await client.messages.create({
 			body: `Sorry ${!!Math.floor(Math.random()) ? userName : ''}, I did not catch that. Could you try again or modify your request?`,
 			from: recipient,
-			to: userPhone
-		})
+			to: userPhone,
+		});
 
-		return ''
+		return '';
 	},
 );
+
+
+
+
+
+// DONALD WEWOLI AKITE

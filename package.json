@@ -27,6 +27,7 @@
     "drizzle-orm": "^0.43.1",
     "drizzle-typebox": "^0.3.2",
     "elysia": "latest",
+    "fuse.js": "^7.1.0",
     "twilio": "^5.5.2"
   },
   "devDependencies": {
