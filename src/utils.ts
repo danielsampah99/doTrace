@@ -1,6 +1,9 @@
 import Fuse from 'fuse.js';
 import { isCloseMatch } from './intents';
-import { GooglePlacesSupportedType, SEARCH_CATEGORIES } from './search-categories';
+import {
+	GooglePlacesSupportedType,
+	SEARCH_CATEGORIES,
+} from './search-categories';
 
 export const getCategories = (): string => {
 	return `Okay, here is the full list of searchable place types.
@@ -349,7 +352,9 @@ Just type one of the terms above (e.g., \`coffee shop\`, \`parking\`, \`museum\`
 `;
 };
 
-export const findCategoryInRequest = (keyword: string): GooglePlacesSupportedType | null => {
+export const findCategoryInRequest = (
+	keyword: string,
+): GooglePlacesSupportedType | null => {
 	const fuse = new Fuse(SEARCH_CATEGORIES, {
 		shouldSort: true,
 		threshold: 0.3,
@@ -363,11 +368,11 @@ export const findCategoryInRequest = (keyword: string): GooglePlacesSupportedTyp
 	for (const token of tokens) {
 		const result = fuse.search(token);
 		if (result.length > 0) {
-
-			return result[0].item?.replace(/\s+/g, '_').toLowerCase() as GooglePlacesSupportedType;
+			return result[0].item
+				?.replace(/\s+/g, '_')
+				.toLowerCase() as GooglePlacesSupportedType;
 		}
 	}
-
 
 	return null;
 };

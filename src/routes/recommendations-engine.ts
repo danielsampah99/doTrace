@@ -1,6 +1,19 @@
+import { PlacesClient } from '@googlemaps/places';
 import axios, { AxiosError } from 'axios';
 // import { PlacesClient } from '@googlemaps/places';
 // const {PlacesClient} = require('@googlemaps/places').v1;
+
+export const NORMAL_ENDPOINT =
+	'https://places.googleapis.com/v1/places:searchNearby';
+export const PRO_ENDPOINT =
+	'https://places.googleapis.com/v1/places:searchText';
+export const LANGUAGE_CODE = 'en-GB';
+export const REGION_CODE = 'GB';
+export const PRO_OPEN_NOW = true;
+export const PRO_MIN_RATING = 3.5; // external api uses 0.5 ceiling rounding. so 3.5 will become 4 and eliminate everything less that that.
+export const MAX_RESULT_COUNT = 10;
+
+const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
 export const recommendBusinesses = async (params: {
 	includedTypes: string[];
@@ -10,21 +23,12 @@ export const recommendBusinesses = async (params: {
 }) => {
 	const { radius, longitude, latitude, includedTypes } = params;
 
-	const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-
-	console.info('--- recommendBusinesses (using Axios) ---');
-	console.info('Params:', params);
-
-	if (!apiKey) {
+	if (!API_KEY) {
 		console.error(
 			'FATAL: GOOGLE_PLACES_API_KEY environment variable is not set.',
 		);
 		return []; // Return empty array if API key is missing
 	}
-	console.info('API key found.');
-
-	// API Endpoint
-	const endpoint = 'https://places.googleapis.com/v1/places:searchNearby';
 
 	// Request Body Payload
 	const requestBody = {
@@ -41,32 +45,23 @@ export const recommendBusinesses = async (params: {
 			},
 		},
 		// Optional parameters (match original logic or adjust)
-		languageCode: 'en-GB',
-		regionCode: 'GB', // Use a CLDR region code like 'GB', 'US', etc.
+		languageCode: LANGUAGE_CODE,
+		regionCode: REGION_CODE,
 		rankPreference: 'POPULARITY', // POPULARITY or DISTANCE
 	};
 
 	// Request Headers
 	const headers = {
 		'Content-Type': 'application/json',
-		'X-Goog-Api-Key': apiKey,
+		'X-Goog-Api-Key': API_KEY,
 		'X-Goog-FieldMask':
 			'places.id,places.displayName,places.formattedAddress,places.googleMapsLinks,places.googleMapsUri,places.types,places.location,places.websiteUri,places.addressDescriptor',
 	};
 
-	console.log('Attempting Axios POST to:', endpoint);
-	// console.log("Request Body:", JSON.stringify(requestBody, null, 2)); // debugging
-	// console.log("Headers:", headers); // debugging
-
 	try {
-		console.log('Sending request via Axios...');
-		console.time('axiosApiCallDuration'); // Start timer
-
-		// Make the POST request using axios
-		const response = await axios.post(endpoint, requestBody, { headers });
-
-		console.timeEnd('axiosApiCallDuration'); // End timer
-		console.log('Axios request successful. Status:', response.status);
+		const response = await axios.post(NORMAL_ENDPOINT, requestBody, {
+			headers,
+		});
 
 		const places = response.data?.places ?? [];
 		console.log(`Found ${places.length} places.`);
@@ -94,4 +89,58 @@ export const recommendBusinesses = async (params: {
 	} finally {
 		console.log('--- Exiting recommendBusinesses function ---');
 	}
+};
+
+export interface RecommendProBusinessParams {
+	textQuery: string;
+	radius: number;
+	longitude: number;
+	latitude: number;
+}
+
+export const recommendProBusiness = async (
+	params: RecommendProBusinessParams,
+): Promise<any[]> => {
+	const { latitude, longitude, radius, textQuery } = params;
+
+	const request = {
+		textQuery,
+		languageCode: LANGUAGE_CODE,
+		minRating: PRO_MIN_RATING,
+		regionCode: REGION_CODE,
+		maxResultCount: MAX_RESULT_COUNT,
+		openNow: PRO_OPEN_NOW,
+		rankPreference: 'DISTANCE',
+		locationBias: {
+			circle: {
+				center: {
+					latitude,
+					longitude,
+				},
+				radius,
+			},
+		},
+	};
+
+	const headers = {
+		'Content-Type': 'application/json',
+		'X-Goog-Api-Key': API_KEY,
+		'X-Goog-FieldMask':
+			'places.id,places.displayName,places.formattedAddress,places.googleMapsLinks,places.googleMapsUri,places.types,places.location,places.websiteUri,places.addressDescriptor',
+	};
+
+	const response = await axios.post(PRO_ENDPOINT, request, {
+		headers,
+	});
+
+	if (
+		Array.isArray(response?.data?.places) &&
+		response?.data?.places.length > 0
+	) {
+		return response?.data?.places;
+	}
+
+	console.dir(response);
+
+	return [];
 };

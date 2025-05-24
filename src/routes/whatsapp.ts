@@ -14,7 +14,10 @@ import {
 	isHelpRequest,
 	isNonPaidRequest,
 } from '../intents';
-import { recommendBusinesses } from './recommendations-engine';
+import {
+	recommendBusinesses,
+	recommendProBusiness,
+} from './recommendations-engine';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -79,6 +82,31 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 				body: messageBody,
 				from: recipient,
 				to: userPhone,
+			});
+			return '';
+		}
+
+		// satisfy pro users
+		if (!!user?.isPro) {
+			const query = body.Body;
+			const places = await recommendProBusiness({
+				latitude: user?.latitude ? Number.parseFloat(user.latitude) : 0,
+				longitude: user?.longitude
+					? Number.parseFloat(user.longitude)
+					: 0,
+				radius: 3000,
+				textQuery: query.toLowerCase(),
+			});
+
+			const response = places.length > 0 ? `Here is, **${query.toLocaleLowerCase('en-GB')}**.\n
+				${places.map((item, index) => `${index + 1}. 📍 ${item?.displayName?.text} - 🗺️ ${item?.googleMapsLinks?.directionsUri}`).join('\n\n')}
+				` : `No results for ${query.toLowerCase()}`;
+
+			await client.messages.create({
+				body: response,
+				from: recipient,
+				to: userPhone,
+				shortenUrls: true,
 			});
 			return '';
 		}
@@ -397,9 +425,5 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 		return '';
 	},
 );
-
-
-
-
 
 // DONALD WEWOLI AKITE
