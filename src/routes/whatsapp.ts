@@ -216,7 +216,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 					const messageBody =
 						Array.isArray(recommendations) &&
 						recommendations?.length! > 0
-							? `Okay, here are ${recommendations.length} ${user?.searchType?.replaceAll('_', ' ')} within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
+							? `Okay, here are ${recommendations.length} ${searchType?.replaceAll('_', ' ')} within ${3000} meters:\n ${recommendations.map((service, index) => `${index + 1} ${service?.displayName?.text} - ${service?.googleMapsLinks?.directionsUri}`).join('\n\n')}`
 							: `Thanks for your input! I can't process your request at the moment. Kindly try again soon`;
 
 					await client.messages.create({
