@@ -15,7 +15,6 @@ import {
 	isNonPaidRequest,
 } from '../intents';
 import {
-	recommendBusinesses,
 	recommendProBusiness,
 } from './recommendations-engine';
 import { GoogleGenAI } from '@google/genai';
