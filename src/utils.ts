@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js';
-import { isCloseMatch } from './intents';
+
 import {
 	GooglePlacesSupportedType,
 	SEARCH_CATEGORIES,

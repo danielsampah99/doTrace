@@ -19,6 +19,7 @@
   "dependencies": {
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/swagger": "^1.2.2",
+    "@google/genai": "^1.5.1",
     "@googlemaps/google-maps-services-js": "^3.4.1",
     "@googlemaps/places": "^2.0.1",
     "@neondatabase/serverless": "^1.0.0",

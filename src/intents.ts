@@ -21,6 +21,10 @@ export const PRIMARY_CATEGORY_TERMS = [
 	'services offered',
 ];
 
+/**
+ * Texts or phrases that are allowed by non-paying users.
+ * @returns string[] which is all the phrases allowed
+ */
 export const PRIMARY_NON_PAID_REQUESTS: string[] = [
 	// Core "near me" phrases
 	'near me',
