@@ -172,8 +172,8 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 					config: {
 						tools: [
 							{
-								googleMaps: {},
-								googleSearch: {},
+								// googleMaps: { authConfig: { }}, google maps also not available in gemini
+								// googleSearch: {}, Enterprise web search is not available in gemini
 								googleSearchRetrieval: {},
 							},
 						],
