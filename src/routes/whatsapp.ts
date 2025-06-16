@@ -165,7 +165,8 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			// 	`
 			// 		: `No results for ${query.toLowerCase()}`;
 			//
-
+			console.info('--- using gemini-ai---')
+			console.time('Starting')
 			const response = await ai.models.generateContent({
 				model: 'gemini-2.0-flash',
 				contents: `${messageText}. if it helps. my longitude is: ${user.latitude} and latitude is ${user.longitude}. Use that for the request, please`,
@@ -191,6 +192,9 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 					},
 				},
 			});
+
+			console.info('--Gemini response: ', response)
+			console.timeEnd('--Gemini responded---')
 
 			await client.messages.create({
 				body: response.text,
