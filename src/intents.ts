@@ -9,7 +9,8 @@ export const PRIMARY_HELP_TERMS = [
 ];
 
 export const PRIMARY_CATEGORY_TERMS = [
-	'categories', '/categories',
+	'categories',
+	'/categories',
 	'what can i search',
 	'what do you have',
 	'list of things',

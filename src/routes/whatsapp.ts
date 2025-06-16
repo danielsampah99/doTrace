@@ -14,9 +14,7 @@ import {
 	isHelpRequest,
 	isNonPaidRequest,
 } from '../intents';
-import {
-	recommendProBusiness,
-} from './recommendations-engine';
+import { recommendProBusiness } from './recommendations-engine';
 import { GoogleGenAI } from '@google/genai';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -164,45 +162,55 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			// 	${places.map((item, index) => `${index + 1}. 📍 ${item?.displayName?.text} - 🗺️ ${item?.googleMapsLinks?.directionsUri}`).join('\n\n')}
 			// 	`
 			// 		: `No results for ${query.toLowerCase()}`;
-			//
-			console.info('--- using gemini-ai---')
-			console.time('Starting')
-			const response = await ai.models.generateContent({
-				model: 'gemini-2.0-flash',
-				contents: `${messageText}. if it helps. my longitude is: ${user.latitude} and latitude is ${user.longitude}. Use that for the request, please`,
-				config: {
-					tools: [
-						{
-							googleMaps: {},
-							googleSearch: {},
-							googleSearchRetrieval: {},
-						},
-					],
-					toolConfig: {
-						retrievalConfig: {
-							latLng: {
-								latitude: user.latitude
-									? Number.parseFloat(user.latitude)
-									: 0,
-								longitude: user.longitude
-									? Number.parseFloat(user.longitude)
-									: 0,
+
+			try {
+				console.info('--- using gemini-ai---');
+				console.time('Starting');
+				const response = await ai.models.generateContent({
+					model: 'gemini-2.0-flash',
+					contents: `${messageText}. if it helps. my longitude is: ${user.latitude} and latitude is ${user.longitude}. Use that for the request, please`,
+					config: {
+						tools: [
+							{
+								googleMaps: {},
+								googleSearch: {},
+								googleSearchRetrieval: {},
+							},
+						],
+						toolConfig: {
+							retrievalConfig: {
+								latLng: {
+									latitude: user.latitude
+										? Number.parseFloat(user.latitude)
+										: 0,
+									longitude: user.longitude
+										? Number.parseFloat(user.longitude)
+										: 0,
+								},
 							},
 						},
 					},
-				},
-			});
+				});
 
-			console.info('--Gemini response: ', response)
-			console.timeEnd('--Gemini responded---')
+				console.info('--Gemini response: ', response);
+				console.timeEnd('--Gemini responded---');
 
-			await client.messages.create({
-				body: response.text,
-				from: recipient,
-				to: userPhone,
-				shortenUrls: true,
-			});
-			return '';
+				await client.messages.create({
+					body: response.text,
+					from: recipient,
+					to: userPhone,
+					shortenUrls: true,
+				});
+				return '';
+			} catch (e) {
+				console.error('could not use gemini: ', e);
+				await client.messages.create({
+					body: `Something went wrong with your pro request: ${e instanceof Error && e.message}`,
+					from: recipient,
+					to: userPhone,
+					shortenUrls: true,
+				});
+			}
 		}
 
 		/**
