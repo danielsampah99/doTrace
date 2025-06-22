@@ -177,13 +177,6 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 				 				Use that for the request, please, rank the responses in order of proximity to my coordinates and SHOULD always be a list of ten results.
 								No more than that. ever.`,
 					config: {
-						tools: [
-							{
-								// googleMaps: { authConfig: { }}, google maps also not available in gemini
-								// googleSearch: {}, Enterprise web search is not available in gemini
-								// googleSearchRetrieval: {},
-							},
-						],
 						toolConfig: {
 							retrievalConfig: {
 								latLng: {
