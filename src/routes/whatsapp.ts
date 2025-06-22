@@ -175,7 +175,7 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 					model: 'gemini-2.0-flash',
 					contents: `${messageText}. If it helps, my longitude is: ${user.latitude} and latitude is ${user.longitude}.
 				 				Use that for the request, please, rank the responses in order of proximity to my coordinates and SHOULD always be a list of ten results.
-								No more than that. ever. Be super conscise with your response. just send the list of your response. NO EXTRA introduction of conclusion. just the LIST.`,
+								No more than that. ever. Be super conscise with your response. just send the list of your response. NO EXTRA introduction OR conclusion. just the LIST of item and it's google maps link.`,
 					config: {
 						toolConfig: {
 							retrievalConfig: {
