@@ -1,15 +1,15 @@
-import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { envVars } from '../../config/environment';
 import { config } from 'dotenv';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { envVars } from '../../config/environment';
 
+import { businessesRelations } from './schema/business-relations';
+import { businessSubscriptions } from './schema/business-subsriptions';
 import { businesses } from './schema/businesses';
-import { users } from './schema/users';
 import { geofences } from './schema/geofences';
 import { userInteractions } from './schema/user-interactions';
-import { businessSubscriptions } from './schema/business-subsriptions';
-import { businessesRelations } from './schema/business-relations';
 import { usersRelations } from './schema/user-relations';
+import { users } from './schema/users';
 
 config({ path: '.env' });
 

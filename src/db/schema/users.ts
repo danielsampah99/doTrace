@@ -1,12 +1,12 @@
 import {
-	pgTable,
-	varchar,
-	timestamp,
 	boolean,
-	jsonb,
-	integer,
-	text,
 	decimal,
+	integer,
+	jsonb,
+	pgTable,
+	text,
+	timestamp,
+	varchar,
 } from 'drizzle-orm/pg-core';
 
 // Users table

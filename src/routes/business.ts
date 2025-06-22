@@ -1,9 +1,9 @@
+// import { businesses, businessSubscriptions } from '../db/schema';
+import { and, eq, gte } from 'drizzle-orm';
 import { Elysia } from 'elysia';
 import { db } from '../db';
-// import { businesses, businessSubscriptions } from '../db/schema';
-import { eq, and, gte } from 'drizzle-orm';
-import { businesses } from '../db/schema/businesses';
 import { businessSubscriptions } from '../db/schema/business-subsriptions';
+import { businesses } from '../db/schema/businesses';
 
 export const businessRouter = new Elysia({ prefix: '/business' })
 	.post('/register', async ({ body }) => {

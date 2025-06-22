@@ -1,10 +1,10 @@
 import {
-	pgTable,
-	serial,
-	varchar,
-	timestamp,
 	integer,
 	jsonb,
+	pgTable,
+	serial,
+	timestamp,
+	varchar,
 } from 'drizzle-orm/pg-core';
 import { businesses } from './businesses';
 

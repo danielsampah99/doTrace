@@ -1,11 +1,11 @@
 // Businesses table
 
 import {
+	boolean,
 	doublePrecision,
 	jsonb,
 	pgTable,
 	serial,
-	boolean,
 	text,
 	timestamp,
 	varchar,

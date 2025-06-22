@@ -1,8 +1,8 @@
+import { eq } from 'drizzle-orm';
 import { Elysia } from 'elysia';
 import { db } from '../db';
 // import { users, userInteractions } from '../db/schema';
 import { users } from '../db/schema/users';
-import { eq } from 'drizzle-orm';
 
 export const userRouter = new Elysia({ prefix: '/user' })
 	.get('/:id', async ({ params }) => {

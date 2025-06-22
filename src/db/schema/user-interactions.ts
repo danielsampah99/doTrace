@@ -6,8 +6,8 @@ import {
 	timestamp,
 	varchar,
 } from 'drizzle-orm/pg-core';
-import { users } from './users';
 import { businesses } from './businesses';
+import { users } from './users';
 
 // User interactions table
 export const userInteractions = pgTable('user_interactions', {

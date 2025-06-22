@@ -1,8 +1,6 @@
+import { Client } from '@googlemaps/google-maps-services-js';
 import { Elysia } from 'elysia';
 import { db } from '../db';
-// import { geofences } from '../db/schema';
-import { eq } from 'drizzle-orm';
-import { Client } from '@googlemaps/google-maps-services-js';
 import { geofences } from '../db/schema/geofences';
 
 const mapsClient = new Client({});

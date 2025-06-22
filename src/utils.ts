@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js';
 
 import {
-	GooglePlacesSupportedType,
+	type GooglePlacesSupportedType,
 	SEARCH_CATEGORIES,
 } from './search-categories';
 

@@ -1,5 +1,4 @@
-import { PlacesClient } from '@googlemaps/places';
-import axios, { AxiosError } from 'axios';
+import axios, { type AxiosError } from 'axios';
 // import { PlacesClient } from '@googlemaps/places';
 // const {PlacesClient} = require('@googlemaps/places').v1;
 

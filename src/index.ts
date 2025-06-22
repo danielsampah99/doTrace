@@ -1,12 +1,12 @@
-import { Elysia } from 'elysia';
-import { swagger } from '@elysiajs/swagger';
 import cors from '@elysiajs/cors';
-import { userRouter } from './routes/users';
+import { swagger } from '@elysiajs/swagger';
+import { Elysia } from 'elysia';
 import { envVars } from '../config/environment';
-import { twilioRouter } from './routes/whatsapp';
 import { businessRouter } from './routes/business';
 import { geofenceRouter } from './routes/geofence';
 import { recommendationRouter } from './routes/recommendation';
+import { userRouter } from './routes/users';
+import { twilioRouter } from './routes/whatsapp';
 
 const app = new Elysia({ prefix: '/api/v1' })
 	.use(swagger())

@@ -1,12 +1,11 @@
-import { Elysia } from 'elysia';
-import { db } from '../db';
+import { GoogleGenAI } from '@google/genai';
 // import { businesses } from '../db/schema/businesses';
 // import { businesses, users } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { users as usersTable } from '../db/schema/users';
+import { Elysia } from 'elysia';
 import twilio from 'twilio';
-import type { TwilioWhatsAppWebhook } from '../types';
-import { findCategoryInRequest, getCategories } from '../utils';
+import { db } from '../db';
+import { users as usersTable } from '../db/schema/users';
 import {
 	getHelpResponse,
 	getLocationUpdateResponse,
@@ -14,8 +13,9 @@ import {
 	isHelpRequest,
 	isNonPaidRequest,
 } from '../intents';
+import type { TwilioWhatsAppWebhook } from '../types';
+import { getCategories } from '../utils';
 import { recommendProBusiness } from './recommendations-engine';
-import { GoogleGenAI } from '@google/genai';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -28,7 +28,6 @@ const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY, vertexai: false });
 export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 	'/webhook',
 	async ({ body }: { body: TwilioWhatsAppWebhook }) => {
-		// const {   } = body
 		console.dir({ body: body });
 
 		// Normalize phone number
@@ -46,14 +45,14 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 		}
 
 		//  --- user lookup ---
-		let user = await db.query.users.findFirst({
+		const user = await db.query.users.findFirst({
 			where: eq(usersTable.phoneNumber, normalizedPhone),
 		});
 
 		const messageText = body.Body.trim().toLocaleLowerCase('en-GB') ?? '';
 
 		/**
-		 * whenever the user sends their location, it's updated and saved with a notification sent to them. ---
+		 * register a new user if they have not yet been registered ---
 		 */
 		if (!user) {
 			try {
@@ -61,13 +60,20 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 					.insert(usersTable)
 					.values({
 						phoneNumber: userPhone,
+						isPro: false,
 					})
 					.returning();
 			} catch (e) {
 				console.error('new user error: ', e);
+				await client.messages.create({
+					to: userPhone,
+					from: recipient,
+					body: `Something went wrong in trying to register ${userName} as a user.`,
+				});
+				return '';
 			}
 
-			// send the response to the user
+			// let the user know their account has been successfully registered.
 			await client.messages.create({
 				body: `Hello, ${userName}, welcome to 10nearby!
 							Send me your location once and I'll use that to find nearby places for you.
@@ -117,7 +123,6 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 				from: recipient,
 				to: userPhone,
 			});
-
 			return '';
 		}
 
@@ -168,13 +173,15 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 				console.time('Starting');
 				const response = await ai.models.generateContent({
 					model: 'gemini-2.0-flash',
-					contents: `${messageText}. if it helps. my longitude is: ${user.latitude} and latitude is ${user.longitude}. Use that for the request, please`,
+					contents: `${messageText}. If it helps, my longitude is: ${user.latitude} and latitude is ${user.longitude}.
+				 				Use that for the request, please, rank the responses in order of proximity to my coordinates and SHOULD always be a list of ten results.
+								No more than that. ever.`,
 					config: {
 						tools: [
 							{
 								// googleMaps: { authConfig: { }}, google maps also not available in gemini
 								// googleSearch: {}, Enterprise web search is not available in gemini
-								googleSearchRetrieval: {},
+								// googleSearchRetrieval: {},
 							},
 						],
 						toolConfig: {
@@ -205,11 +212,12 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			} catch (e) {
 				console.error('could not use gemini: ', e);
 				await client.messages.create({
-					body: `Something went wrong with your pro request: ${e instanceof Error && e.message}`,
+					body: `Something went wrong with your pro request. Please try again soon.`,
 					from: recipient,
 					to: userPhone,
 					shortenUrls: true,
 				});
+				return ''
 			}
 		}
 
@@ -253,29 +261,43 @@ export const twilioRouter = new Elysia({ prefix: '/twilio' }).post(
 			// 	return '';
 			// }
 			//
+			try {
+				const places = await recommendProBusiness({
+					latitude: user?.latitude
+						? Number.parseFloat(user.latitude)
+						: 0,
+					longitude: user?.longitude
+						? Number.parseFloat(user.longitude)
+						: 0,
+					radius: 3000,
+					textQuery: messageText,
+				});
 
-			const places = await recommendProBusiness({
-				latitude: user?.latitude ? Number.parseFloat(user.latitude) : 0,
-				longitude: user?.longitude
-					? Number.parseFloat(user.longitude)
-					: 0,
-				radius: 3000,
-				textQuery: messageText,
-			});
-
-			const response =
-				places.length > 0
-					? `Here is, **${messageText}**.\n
+				const response =
+					places.length > 0
+						? `Here is, **${messageText}**.\n
 				${places.map((item, index) => `${index + 1}. 📍 ${item?.displayName?.text} - 🗺️ ${item?.googleMapsLinks?.directionsUri}`).join('\n\n')}
 				`
-					: `No results for ${messageText}. ${Math.floor(Math.random() * 2) > 1 && 'Perhaps, you should try upgrading your account using the console...'}`;
+						: `No results for ${messageText}. ${Math.floor(Math.random() * 2) > 1 && 'Perhaps, you should try upgrading your account using the console...'}`;
 
-			await client.messages.create({
-				body: response,
-				from: recipient,
-				to: userPhone,
-			});
-			return '';
+				await client.messages.create({
+					body: response,
+					from: recipient,
+					to: userPhone,
+				});
+				return '';
+			} catch (e) {
+				console.error(
+					`Something went wrong with normal requests. ${e}`,
+				);
+
+				await client.messages.create({
+					body: 'Something went wrong with your request. Please try again...',
+					from: recipient,
+					to: userPhone,
+				});
+				return ''
+			}
 		}
 
 		// --- default no response ---
